@@ -1,0 +1,51 @@
+name: Auto-Grade Kotlin MCQs
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  grade:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    - name: Create Grading Script
+      run: |
+        echo "import re" > grade.py
+        echo "correct_answers = ['B', 'A', 'B'] # Add more answers as needed" >> grade.py
+        echo "score = 0" >> grade.py
+        echo "total = len(correct_answers)" >> grade.py
+        echo "try:" >> grade.py
+        echo "    with open('README.md', 'r') as file:" >> grade.py
+        echo "        content = file.read()" >> grade.py
+        echo "    answers = re.findall(r'\*\*Your Answer:\*\*\s*(\w)', content)" >> grade.py
+        echo "    for i, answer in enumerate(answers):" >> grade.py
+        echo "        if answer.upper() == correct_answers[i]:" >> grade.py
+        echo "            score += 1" >> grade.py
+        echo "    result = f'# Grading Result\\n\\n**Score:** {score}/{total}\\n\\n'" >> grade.py
+        echo "    for i, answer in enumerate(answers):" >> grade.py
+        echo "        correct = correct_answers[i]" >> grade.py
+        echo "        result += f'**Question {i+1}:** Your Answer: {answer.upper()} | Correct Answer: {correct} | { '✅ Correct' if answer.upper() == correct else '❌ Incorrect'}\\n\\n'" >> grade.py
+        echo "    with open('RESULT.md', 'w') as result_file:" >> grade.py
+        echo "        result_file.write(result)" >> grade.py
+        echo "except Exception as e:" >> grade.py
+        echo "    print(f'Error occurred: {str(e)}')" >> grade.py
+        echo "    exit(1)" >> grade.py
+
+    - name: Run Grading Script
+      run: python grade.py
+
+    - name: Upload Grading Result
+      uses: actions/upload-artifact@v3
+      with:
+        name: Grading Result
+        path: RESULT.md
